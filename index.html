@@ -8,24 +8,21 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,200..700&display=swap">
 <style>
-/* Apple-Clock-artiger Fokus-Timer für 120-Minuten-Sessions, gebaut zum Einbetten in Notion. */
+/* Apple-Clock-artiger Fokus-Timer für 120-Minuten-Sessions, gebaut zum Einbetten in Notion. Immer im Black Mode. */
 :root {
-  --bg: #ffffff;
-  --fill: #ececf0;
-  --surface: #ffffff;
-  --fg: #1d1d1f;
-  --muted: #8a8a8e;
-  --timer: #ff9500;
-  --timer-ink: #b75c00;
-  --tint: #007aff;
-  --ok: #34c759;
-  --scrim: rgba(255, 255, 255, 0.88);
+  --bg: #000000;
+  --fill: #1c1c1e;
+  --surface: #3a3a3c;
+  --fg: #f5f5f7;
+  --muted: #8e8e93;
+  --timer: #ff9f0a;
+  --timer-ink: #ffb340;
+  --tint: #0a84ff;
+  --ok: #30d158;
+  --scrim: rgba(0, 0, 0, 0.85);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #000000; --fill: #2c2c2e; --surface: #1c1c1e; --fg: #f5f5f7; --muted: #98989d; --timer: #ff9f0a; --timer-ink: #ffb340; --tint: #0a84ff; --ok: #30d158; --scrim: rgba(0, 0, 0, 0.82); color-scheme: dark; }
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
