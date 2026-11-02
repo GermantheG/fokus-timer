@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fokus-Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,200..700&display=swap">
+<style>
+/* Apple-Clock-artiger Fokus-Timer für 120-Minuten-Sessions, gebaut zum Einbetten in Notion. */
+:root {
+  --bg: #ffffff;
+  --fill: #ececf0;
+  --surface: #ffffff;
+  --fg: #1d1d1f;
+  --muted: #8a8a8e;
+  --timer: #ff9500;
+  --timer-ink: #b75c00;
+  --tint: #007aff;
+  --ok: #34c759;
+  --scrim: rgba(255, 255, 255, 0.88);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #000000; --fill: #2c2c2e; --surface: #1c1c1e; --fg: #f5f5f7; --muted: #98989d; --timer: #ff9f0a; --timer-ink: #ffb340; --tint: #0a84ff; --ok: #30d158; --scrim: rgba(0, 0, 0, 0.82); color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--tint); outline-offset: 3px; }
+
+.app {
+  --ring: max(150px, min(58vmin, 620px, calc(100vh - 240px)));
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding-block: max(14px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app.calm { cursor: none; }
+
+.bar { display: flex; align-items: center; gap: 12px; transition: opacity 0.7s ease; }
+.brand { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fill); }
+.app.running .dot { background: var(--timer); animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: 0.3; } }
+.bar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.clock { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.icon-btn { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--fill); display: grid; place-items: center; color: var(--fg); text-decoration: none; }
+.icon-btn svg { width: 15px; height: 15px; }
+
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(8px, 2.2vh, 22px); min-height: 0; text-align: center; }
+.label {
+  border: 0; background: transparent; text-align: center; width: min(560px, 100%);
+  font-family: var(--font-display); font-size: clamp(18px, 3.2vmin, 32px); font-weight: 700; letter-spacing: -0.02em;
+  padding: 2px 8px; border-radius: 8px;
+}
+.label:hover { background: var(--fill); }
+.label:focus { outline: none; background: var(--fill); }
+.ring-wrap { position: relative; width: var(--ring); height: var(--ring); flex: none; }
+.ring { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.track { fill: none; stroke: var(--fill); stroke-width: 1.5; }
+.prog { fill: none; stroke: var(--timer); stroke-width: 1.5; stroke-linecap: round; transition: stroke-dashoffset 0.25s linear; }
+.app.idle .prog { stroke: var(--muted); }
+.readout { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; }
+.time { font-family: var(--font-display); font-weight: 200; line-height: 1; font-size: calc(var(--ring) * 0.19); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.sub { font-size: clamp(12px, 1.8vmin, 15px); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px 28px; transition: opacity 0.7s ease; }
+.ctl { width: 72px; height: 72px; border-radius: 50%; border: 0; font-size: 14px; font-weight: 500; display: grid; place-items: center; }
+.ctl-ghost { background: var(--fill); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--fill); }
+.ctl-primary { background: color-mix(in srgb, var(--timer) 22%, var(--bg)); color: var(--timer-ink); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px color-mix(in srgb, var(--timer) 22%, var(--bg)); }
+.ctl:disabled { opacity: 0.4; cursor: default; }
+.seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--fill); border-radius: 9px; }
+.seg button { border: 0; background: transparent; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 7px; font-variant-numeric: tabular-nums; }
+.seg button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14); }
+.seg button:disabled { cursor: default; }
+.app.running .seg { opacity: 0.4; }
+
+.app.calm .bar, .app.calm .controls { opacity: 0; pointer-events: none; }
+
+.overlay {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px 16px;
+  background: var(--scrim); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+}
+.done-card { display: grid; justify-items: center; gap: 12px; text-align: center; }
+.done-mark { width: 72px; height: 72px; border-radius: 50%; background: var(--ok); color: #ffffff; display: grid; place-items: center; }
+.done-mark svg { width: 32px; height: 32px; }
+.done-card h2 { margin: 4px 0 0; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.done-card p { margin: 0; color: var(--muted); font-size: 15px; }
+.done-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.btn { border: 0; border-radius: 999px; padding: 10px 18px; font-size: 15px; font-weight: 600; }
+.btn-fill { background: var(--timer); color: #ffffff; }
+.btn-plain { background: var(--fill); }
+
+.toast {
+  position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: 16px; max-width: calc(100% - 32px);
+  background: var(--fg); color: var(--bg); border-radius: 999px; padding: 9px 16px; font-size: 13.5px; font-weight: 500; text-align: center;
+}
+[hidden] { display: none !important; }
+
+@media (max-height: 520px) {
+  .ctl { width: 58px; height: 58px; font-size: 13px; }
+  .app { --ring: max(130px, min(58vmin, calc(100vh - 200px))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prog, .bar, .controls { transition: none; }
+  .app.running .dot { animation: none; }
+}
+</style>
+</head>
+<body>
+<main class="app idle" id="app">
+  <header class="bar">
+    <div class="brand"><span class="dot" aria-hidden="true"></span>Fokus</div>
+    <div class="bar-right">
+      <span class="clock" id="clock"></span>
+      <a class="icon-btn" id="tabBtn" href="./" target="_blank" rel="noopener" title="In eigenem Tab öffnen" aria-label="In eigenem Tab öffnen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></svg>
+      </a>
+      <button class="icon-btn" id="fsBtn" type="button" title="Vollbild (F)" aria-label="Vollbild" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="fsIcon" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="center">
+    <input class="label" id="label" type="text" value="Studium-Session" aria-label="Name der Session" maxlength="60" spellcheck="false">
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="track" cx="50" cy="50" r="46"/>
+        <circle class="prog" id="prog" cx="50" cy="50" r="46"/>
+      </svg>
+      <div class="readout" role="timer" aria-live="off">
+        <div class="time" id="time">2:00:00</div>
+        <div class="sub" id="sub">120 Minuten</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctl ctl-ghost" id="resetBtn" type="button" title="Zurücksetzen (R)">Abbrechen</button>
+      <div class="seg" id="presets" role="group" aria-label="Dauer in Minuten">
+        <button type="button" data-min="120">120 Min</button>
+        <button type="button" data-min="90">90</button>
+        <button type="button" data-min="60">60</button>
+        <button type="button" data-min="25">25</button>
+      </div>
+      <button class="ctl ctl-primary" id="startBtn" type="button" title="Start / Pause (Leertaste)">Start</button>
+    </div>
+  </section>
+
+  <div class="overlay" id="done" hidden>
+    <div class="done-card" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+      <div class="done-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h2 id="doneTitle">Session geschafft</h2>
+      <p id="doneText">120 Minuten Fokus</p>
+      <div class="done-actions">
+        <button class="btn btn-fill" id="doneAgain" type="button">Noch eine Runde</button>
+        <button class="btn btn-plain" id="doneClose" type="button">Fertig</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const app = $("app");
+  const KEY = "fokus.timer.v1";
+  const C = 2 * Math.PI * 46;
+  const pad = (n) => String(n).padStart(2, "0");
+  const hm = (d) => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+
+  const fromHash = decodeURIComponent((location.hash || "").slice(1)).replace(/[-_]+/g, " ").trim();
+  const st = Object.assign({ total: 7200, remaining: 7200, running: false, endAt: null, label: "" }, load() || {});
+  if (!st.label) st.label = fromHash || "Studium-Session";
+  let finishedAway = false;
+  if (st.running && st.endAt) {
+    const r = (st.endAt - Date.now()) / 1000;
+    if (r <= 0) { st.running = false; st.endAt = null; st.remaining = 0; finishedAway = true; } else st.remaining = r;
+  } else { st.running = false; st.endAt = null; }
+
+  const fmt = (sec) => { const s = Math.max(0, Math.ceil(sec)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}:${pad(m)}:${pad(x)}` : `${pad(m)}:${pad(x)}`; };
+  const remainingNow = () => (st.running ? Math.max(0, (st.endAt - Date.now()) / 1000) : st.remaining);
+  const untouched = () => !st.running && st.remaining === st.total;
+
+  const prog = $("prog");
+  prog.style.strokeDasharray = String(C);
+  let shown = "";
+  function render() {
+    const rem = remainingNow();
+    const text = fmt(rem);
+    if (text !== shown) { $("time").textContent = text; shown = text; document.title = st.running ? `${text} · Fokus` : "Fokus-Session"; }
+    prog.style.strokeDashoffset = String(C * (1 - (st.total > 0 ? rem / st.total : 0)));
+    $("sub").textContent = st.running ? `Ende um ${hm(new Date(st.endAt))}` : rem <= 0 ? "Abgelaufen" : rem < st.total ? "Pausiert" : `${Math.round(st.total / 60)} Minuten`;
+    $("startBtn").textContent = st.running ? "Pause" : rem > 0 && rem < st.total ? "Weiter" : "Start";
+    $("resetBtn").disabled = untouched();
+    document.querySelectorAll("#presets button").forEach((b) => { b.setAttribute("aria-pressed", String(Number(b.dataset.min) * 60 === st.total)); b.disabled = st.running; });
+    app.classList.toggle("running", st.running);
+    app.classList.toggle("idle", untouched());
+  }
+
+  function start() { unlockAudio(); if (st.remaining <= 0) st.remaining = st.total; st.endAt = Date.now() + st.remaining * 1000; st.running = true; save(); requestWake(); wakeUI(); render(); }
+  function pause() { st.remaining = remainingNow(); st.running = false; st.endAt = null; save(); releaseWake(); app.classList.remove("calm"); render(); }
+  const toggle = () => (st.running ? pause() : start());
+  function reset() { st.running = false; st.endAt = null; st.remaining = st.total; save(); releaseWake(); app.classList.remove("calm"); render(); }
+  function setTotal(sec) { if (st.running) return; st.total = sec; st.remaining = sec; save(); render(); }
+  function finish(sound) {
+    st.running = false; st.endAt = null; st.remaining = 0; save(); releaseWake(); app.classList.remove("calm");
+    if (sound) chime();
+    $("doneText").textContent = `${Math.round(st.total / 60)} Minuten Fokus · ${st.label}`;
+    $("done").hidden = false; $("doneAgain").focus();
+    document.title = "Fertig · Fokus"; render();
+  }
+
+  let wake = null;
+  async function requestWake() { try { if ("wakeLock" in navigator) wake = await navigator.wakeLock.request("screen"); } catch (e) { wake = null; } }
+  function releaseWake() { try { if (wake) wake.release(); } catch (e) {} wake = null; }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && st.running) requestWake(); });
+
+  let actx = null;
+  function unlockAudio() { try { if (!actx) { const A = window.AudioContext || window.webkitAudioContext; if (A) actx = new A(); } if (actx && actx.state === "suspended") actx.resume(); } catch (e) {} }
+  function chime() {
+    if (!actx) return;
+    try {
+      const t0 = actx.currentTime + 0.05;
+      [0, 1.1].forEach((off) => [659.25, 880, 1318.5].forEach((f, i) => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = "sine"; o.frequency.value = f;
+        const t = t0 + off + i * 0.16;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+        o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 1.4);
+      }));
+    } catch (e) {}
+  }
+
+  const FS_OPEN = "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5", FS_CLOSE = "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5";
+  async function toggleFs() {
+    try {
+      if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+      if (!document.documentElement.requestFullscreen) throw new Error("x");
+      await document.documentElement.requestFullscreen();
+    } catch (e) { toast("Vollbild ist hier gesperrt. Öffne den Timer über ↗ in einem eigenen Tab."); }
+  }
+  document.addEventListener("fullscreenchange", () => {
+    const on = !!document.fullscreenElement;
+    $("fsBtn").setAttribute("aria-pressed", String(on));
+    $("fsIcon").setAttribute("d", on ? FS_CLOSE : FS_OPEN);
+  });
+
+  let idleT = null;
+  function wakeUI() { app.classList.remove("calm"); clearTimeout(idleT); idleT = setTimeout(() => { if (st.running && $("done").hidden && document.activeElement !== $("label")) app.classList.add("calm"); }, 3500); }
+  ["mousemove", "pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, wakeUI, { passive: true }));
+
+  let toastT = null;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3600); }
+
+  const label = $("label");
+  label.value = st.label;
+  label.addEventListener("input", () => { st.label = label.value.trim() || "Fokus-Session"; save(); });
+  label.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === "Escape") label.blur(); });
+
+  $("startBtn").addEventListener("click", toggle);
+  $("resetBtn").addEventListener("click", reset);
+  document.querySelectorAll("#presets button").forEach((b) => b.addEventListener("click", () => setTotal(Number(b.dataset.min) * 60)));
+  $("fsBtn").addEventListener("click", toggleFs);
+  $("doneAgain").addEventListener("click", () => { $("done").hidden = true; st.remaining = st.total; start(); });
+  $("doneClose").addEventListener("click", () => { $("done").hidden = true; reset(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.target === label) return;
+    if (!$("done").hidden) { if (e.key === "Escape") { $("done").hidden = true; reset(); } return; }
+    if (e.code === "Space") { if (e.target && e.target.tagName === "BUTTON") return; e.preventDefault(); toggle(); }
+    else if (e.key === "f" || e.key === "F") toggleFs();
+    else if ((e.key === "r" || e.key === "R") && !st.running) reset();
+  });
+
+  let lastMin = "";
+  setInterval(() => {
+    if (st.running && remainingNow() <= 0) finish(true);
+    render();
+    const c = hm(new Date());
+    if (c !== lastMin) { lastMin = c; $("clock").textContent = c; }
+  }, 250);
+
+  $("clock").textContent = hm(new Date());
+  render();
+  if (st.running) { requestWake(); wakeUI(); }
+  if (finishedAway) finish(false);
+})();
+</script>
+</body>
+</html>
